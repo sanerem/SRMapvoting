@@ -30,10 +30,11 @@ local function updateVote(ply, votetype)
 local function voteChange(ply, votetype)
   if voteCheck(ply)==-1 then
     addVote(ply, votetype)
-  elseif voteCheck(ply)==-2 then return end
+  elseif voteCheck(ply)==-2 then return
   else updateVote(ply, votetype) 
   end
 end
+
 util.AddNetworkString("SR_UpVotes")
 util.AddNetworkString("SR_DownVotes")
 
