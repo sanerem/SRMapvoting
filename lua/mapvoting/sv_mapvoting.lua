@@ -16,10 +16,10 @@ local function voteCheck(ply)
   local query="select * from " .. tablename .. " where mapname==\"" .. map .. "\" and steamid==\"" .. ply:SteamID() .. "\""
   local result= sql.Query(query)
   if result==nil then return -1
-    elseif result==false then
-      print (sql.LastError()) return -1
-    else return tonumber(result[1]["votetype"]) 
-    end
+  elseif result==false then
+    print (sql.LastError()) return -2
+  else return tonumber(result[1]["votetype"]) 
+  end
 end
 
 local function updateVote(ply, votetype)
@@ -30,6 +30,7 @@ local function updateVote(ply, votetype)
 local function voteChange(ply, votetype)
   if voteCheck(ply)==-1 then
     addVote(ply, votetype)
+  elseif voteCheck(ply)==-2 then return end
   else updateVote(ply, votetype) 
   end
 end
