@@ -12,6 +12,15 @@ function checkForVoteCommand(ply, text)
   return false
 end
 
-hook.Add("OnPlayerChat", "updownvotingcommandcheck", function(ply, text, team, isDead)
-    if checkForVoteCommand(ply, text) then return true end
+function checkForVoteTotalCommand(ply, text)
+    if text:len()==9 and text=="!mapvotes" then
+      net.Start("SR_MapVotes")
+      net.SendToServer()
+      return true
+    end
+    return false
+end
+
+hook.Add("OnPlayerChat", "mapvotingcommandcheck", function(ply, text, team, isDead)
+    if checkForVoteCommand(ply, text) or checkForVoteTotalCommand(ply, text) then return true end
   end)

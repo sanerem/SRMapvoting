@@ -56,4 +56,15 @@ net.Receive( "SR_DownVotes", function( len, ply )
      --print("Stats sent")
 end)
 
+util.AddNetworkString("SR_MapVotes")
+
+net.Receive( "SR_MapVotes", function( len, ply )
+    local query1="SELECT COUNT (*) AS upVoteCount from " .. tablename .. " where mapname==\"" .. map .. "\" and votetype==1"
+    local result1 = sql.Query(query1)
+    local query2="SELECT COUNT (*) AS downVoteCount from " .. tablename .. " where mapname==\"" .. map .. "\" and votetype==0"
+    local result2 = sql.Query(query2)
+    print ("This map has ".. result1[1]["upVoteCount"] .. " upvotes and " .. result2[1]["downVoteCount"] .. " downvotes")
+    PrintMessage(HUD_PRINTTALK, "This map has ".. result1[1]["upVoteCount"] .. " upvotes and " .. result2[1]["downVoteCount"] .. " downvotes")
+  end)
+
 createMapVotingTable()
