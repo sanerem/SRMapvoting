@@ -27,57 +27,41 @@ hook.Add("OnPlayerChat", "mapvotingcommandcheck", function(ply, text, team, isDe
 
 local map=game.GetMap()
 local tablename="SR_MapVotingTable"
-
-function showMapRankings(ply, cmd, args, argstr)
-local query1="SELECT DISTINCT mapname FROM SR_MapVotingTable"
-  local result1 = sql.Query(query1)
-local query2="SELECT mapname, COUNT(*) as upVoteCount FROM ".. tablename .." WHERE votetype == 1 GROUP BY mapname"
-  local result2 = sql.Query(query2)
-local query3="SELECT mapname, COUNT(*) as downVoteCount FROM ".. tablename .." WHERE votetype == 0 GROUP BY mapname"
-  local result3 = sql.Query(query3)
-local mapvotes = {}
-for row, columns in pairs(result1) do
-mapvotes[columns["mapname"]] = {
-total = 0,
-upvotes = 0,
-downvotes = 0
-}
-end
---[ERROR] addons/srmapvoting/lua/upordownvoting/cl_upordownvoting.lua:39: bad argument #1 to 'pairs' (table expected, got boolean)
-for row, mapname in pairs(result2) do 
-mapvotes[mapname]["upvotes"] = result2["upVoteCount"]
-mapvotes[mapname]["total"] = mapvotes[mapname]["total"] + result2["upVoteCount"]
-end
-for row, mapname in pairs(result3) do 
-mapvotes[mapname]["downvotes"] = result3["downVoteCount"]
-mapvotes[mapname]["total"] = mapvotes[mapname]["total"] - result3["downVoteCount"]
-end
-
-local Frame = vgui.Create( "DFrame" )
-  Frame:SetPos( 5, 5 )
-  Frame:SetSize( ScrW() * 0.500, ScrH() * 0.600 )
-  Frame:SetTitle( "Map Rankings" )
-  Frame:SetVisible( true )
-  Frame:SetDraggable( true )
-  Frame:ShowCloseButton( true )
-  Frame:MakePopup()
-
-local DPanel = vgui.Create( "DPanel", Frame )
-  DPanel:SetPos( 10, 30 )
-  DPanel:SetSize( ScrW() * 0.450, ScrH() * 0.550 )
-
-local AppList = vgui.Create( "DListView", DPanel )
-  DListView:SortByColumn( 2, false )
-  DListView:SetSortable( true )
-  AppList:SetMultiSelect( false )
-  AppList:AddColumn( "Map Name" )
-  AppList:AddColumn( "Rank" )
-  AppList:AddColumn( "Total" )
-  AppList:AddColumn( "Upvotes" )
-  AppList:AddColumn( "Downvotes" )
-for mapname, columns in pairs(mapvotes) do
-  AppList:AddLine(mapname, mapvotes[mapname]["total"], mapvotes[mapname]["upVoteCount"], mapvotes[mapname]["downVoteCount"])
-end
-end
   
-concommand.Add( "SR_ShowMapRankings", showMapRankings )
+local function getRankingsFromServer()
+  net.Start("SR_GetRankings")
+  net.SendToServer()
+
+  net.Receive("SR_ReceiveRankings", function(len)
+    local mapvotes = net.ReadTable()
+    local Frame = vgui.Create( "DFrame" )
+    Frame:SetPos( 5, 5 )
+    Frame:SetSize( 1000, 500)
+    Frame:SetTitle( "Map Rankings" )
+    Frame:SetVisible( true )
+    Frame:SetDraggable( true )
+    Frame:ShowCloseButton( true )
+    Frame:MakePopup()
+
+  local DPanel = vgui.Create( "DPanel", Frame )
+    DPanel:SetPos( 10, 30 )
+    DPanel:SetSize( 990, 490 )
+-- GET THE VALUES IN THE TABLE TO CENTER
+  local AppList = vgui.Create( "DListView", DPanel )
+    AppList:SetPos( 10, 10 )
+    AppList:SetSize( 950, 450)
+    --AppList:SortByColumn( 2, false )
+    AppList:SetSortable( true )
+    AppList:SetMultiSelect( false )
+    AppList:AddColumn( "Map Name" )
+    AppList:AddColumn( "Rank" )
+    AppList:AddColumn( "Total" )
+    AppList:AddColumn( "Upvotes" )
+    AppList:AddColumn( "Downvotes" )
+    for mapname, columns in pairs(mapvotes) do
+    AppList:AddLine(mapname, 0, tonumber(mapvotes[mapname]["total"]), tonumber(mapvotes[mapname]["upvotes"]), tonumber(mapvotes[mapname]["downvotes"]))
+    end
+  end)
+end
+
+concommand.Add( "SR_ShowMapRankings", getRankingsFromServer )

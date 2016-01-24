@@ -46,7 +46,46 @@ net.Receive( "SR_DownVotes", function( len, ply )
     voteChange(ply, 0)
 end)
 
+function gatherMapRankings(cmd, args, argstr)
+local query1="SELECT DISTINCT mapname FROM SR_MapVotingTable"
+local result1 = sql.Query(query1)
+
+local query2="SELECT mapname, COUNT(*) as upVoteCount FROM ".. tablename .." WHERE votetype == 1 GROUP BY mapname"
+local result2 = sql.Query(query2)
+
+local query3="SELECT mapname, COUNT(*) as downVoteCount FROM ".. tablename .." WHERE votetype == 0 GROUP BY mapname"
+local result3 = sql.Query(query3)
+  
+local mapvotes = {}
+
+if result1 ~= nil then
+  for row, columns in pairs(result1) do
+  mapvotes[columns["mapname"]] = {
+  total = 0,
+  upvotes = 0,
+  downvotes = 0
+  }
+  end
+end
+ if result2 ~= nil then
+  for row, columns in pairs(result2) do 
+  mapvotes[columns["mapname"]]["upvotes"] = columns["upVoteCount"]
+  mapvotes[columns["mapname"]]["total"] = mapvotes[columns["mapname"]]["total"] + columns["upVoteCount"]
+  end
+end
+
+ if result3 ~= nil then
+  for row, columns in pairs(result3) do 
+  mapvotes[columns["mapname"]]["downvotes"] = columns["downVoteCount"]
+  mapvotes[columns["mapname"]]["total"] = mapvotes[columns["mapname"]]["total"] - columns["downVoteCount"]
+  end
+end
+return mapvotes
+end
+
 util.AddNetworkString("SR_MapVotes")
+util.AddNetworkString("SR_GetRankings")
+util.AddNetworkString("SR_ReceiveRankings")
 
 net.Receive( "SR_MapVotes", function( len, ply ) --Either pass in two parameters, giving it the "upVoteCount"/"downVoteCount" string and the votetype, or one parameter (preferably the votetype) and use an if statement inside the function to deduce what the other values should be.
     local query1="SELECT COUNT (*) AS upVoteCount from " .. tablename .. " where mapname==\"" .. map .. "\" and votetype==1"
@@ -56,5 +95,13 @@ net.Receive( "SR_MapVotes", function( len, ply ) --Either pass in two parameters
     print ("This map has ".. result1[1]["upVoteCount"] .. " upvotes and " .. result2[1]["downVoteCount"] .. " downvotes")
     PrintMessage(HUD_PRINTTALK, "This map has ".. result1[1]["upVoteCount"] .. " upvotes and " .. result2[1]["downVoteCount"] .. " downvotes")
   end)
+
+net.Receive( "SR_GetRankings", function( len, ply )
+    local rankings = gatherMapRankings()
+    net.Start ("SR_ReceiveRankings")
+    PrintTable(rankings)
+    net.WriteTable(rankings)
+    net.Send(ply)
+end)
 
 createMapVotingTable()
