@@ -30,7 +30,7 @@ local function updateVote(ply, votetype)
 local function voteChange(ply, votetype)
   if voteCheck(ply)==-1 then
     addVote(ply, votetype)
-  elseif voteCheck(ply)==-2 then return
+  elseif voteCheck(ply)==-2 then return -- Should this be returning something?
   else updateVote(ply, votetype) 
   end
 end
@@ -67,6 +67,7 @@ if result1 ~= nil then
   }
   end
 end
+
  if result2 ~= nil then
   for row, columns in pairs(result2) do 
   mapvotes[columns["mapname"]]["upvotes"] = columns["upVoteCount"]
@@ -80,12 +81,14 @@ end
   mapvotes[columns["mapname"]]["total"] = mapvotes[columns["mapname"]]["total"] - columns["downVoteCount"]
   end
 end
+
 return mapvotes
 end
 
 util.AddNetworkString("SR_MapVotes")
 util.AddNetworkString("SR_GetRankings")
 util.AddNetworkString("SR_ReceiveRankings")
+util.AddNetworkString("SR_ClearVotesCommand")
 
 net.Receive( "SR_MapVotes", function( len, ply ) --Either pass in two parameters, giving it the "upVoteCount"/"downVoteCount" string and the votetype, or one parameter (preferably the votetype) and use an if statement inside the function to deduce what the other values should be.
     local query1="SELECT COUNT (*) AS upVoteCount from " .. tablename .. " where mapname==\"" .. map .. "\" and votetype==1"
@@ -99,9 +102,12 @@ net.Receive( "SR_MapVotes", function( len, ply ) --Either pass in two parameters
 net.Receive( "SR_GetRankings", function( len, ply )
     local rankings = gatherMapRankings()
     net.Start ("SR_ReceiveRankings")
-    PrintTable(rankings)
     net.WriteTable(rankings)
     net.Send(ply)
 end)
+
+--[[net.Recieve( "SR_ClearVotesCommand", function( len, ply )
+  
+end)]]
 
 createMapVotingTable()
