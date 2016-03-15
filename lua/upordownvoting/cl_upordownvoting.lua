@@ -66,13 +66,12 @@ local function getRankingsFromServer() -- Gets all map ranking information and c
     AppList:SetSortable( true )
     AppList:SetMultiSelect( false )
     AppList:AddColumn( "Map Name" )
-    AppList:AddColumn( "Rank" )
     AppList:AddColumn( "Total" )
     AppList:AddColumn( "Upvotes" )
     AppList:AddColumn( "Downvotes" )
     
     for mapname, columns in pairs(mapvotes) do
-    AppList:AddLine(mapname, 0, tonumber(mapvotes[mapname]["total"]), tonumber(mapvotes[mapname]["upvotes"]), tonumber(mapvotes[mapname]["downvotes"]))
+    AppList:AddLine(mapname, tonumber(mapvotes[mapname]["total"]), tonumber(mapvotes[mapname]["upvotes"]), tonumber(mapvotes[mapname]["downvotes"]))
     end
   end)
 end

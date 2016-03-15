@@ -2,6 +2,8 @@ local map=game.GetMap()
 
 local tablename="SR_MapVotingTable"
 
+mapvotes = {}
+
 local function createMapVotingTable()
   local query="create table " .. tablename .. " (id INTEGER PRIMARY KEY, mapname string not null, steamid string not null, votetype integer not null)"
   sql.Query(query)
@@ -55,8 +57,6 @@ local result2 = sql.Query(query2)
 
 local query3="SELECT mapname, COUNT(*) as downVoteCount FROM ".. tablename .." WHERE votetype == 0 GROUP BY mapname"
 local result3 = sql.Query(query3)
-  
-local mapvotes = {}
 
 if result1 ~= nil then
   for row, columns in pairs(result1) do

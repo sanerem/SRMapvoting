@@ -3,19 +3,15 @@
 -- These are the initial values for this set of variables.
 
 local map=game.GetMap()
-
 local mapMinMaxTable = UpOrDownVoting.mapMinMaxTable
-  
-local playercount = #player.GetAll()
-
-local currentplayercount = #player.GetAll()
-
 local nextmap = ""
-
-local time_left = math.max(0, (GetConVar("ttt_time_limit_minutes"):GetInt() * 60) - CurTime())
-
 local switchmap = false
 
+local playercount = #player.GetAll()
+local currentplayercount = #player.GetAll()
+
+
+local time_left = math.max(0, (GetConVar("ttt_time_limit_minutes"):GetInt() * 60) - CurTime())
 local rounds_left = math.max(0, GetGlobalInt("ttt_rounds_left", 6) - 1)
 
 SetGlobalInt("ttt_rounds_left", rounds_left)
@@ -40,7 +36,7 @@ local function checkForMinMaxTable()
 end
   -- SAY NAME OF NEXT MAP IN CHAT AND AT TOP RIGHT IF IT'S NOT ALREADY DONE GLOBALLY, CHECK THE FILES. -- Checked, does not appear so, not confirmed.
 local function createViableMapsTable()
-  local maplist[columns["mapname"] = {
+  maplist[columns["mapname"]] = {
     total = 0
     }
   for mapname, minmax in pairs(mapMinMaxTable) do -- Add to own function?
@@ -58,24 +54,45 @@ local function changeNextMapDueToPlayerCount()
   (mapMinMaxTable[nextmap]["minplayers"] <= playercount or mapMinMaxTable[nextmap]["maxplayers"] >= playercount) then
     createViableMapsTable()
   end
--- ANNOUNCE CHANGE IN CHAT/TOP RIGHT
+-- ANNOUNCE CHANGE IN CHAT/TOP RIGHT -- Automatic?
 end
 
-local function setRandomNextMapFromList() -- CURRENTLY BEING WORKED ON
+local function setRandomNextMapFromList() -- Sets the next map based on a modified probability
   if mapMinMaxTable ~= nil then
-    for mapname in mapvotes do
-      -- CHANGE CHANGES BASED ON VOTES
+    local probabilitytable = {}
+    local selectiontable = {}
+    for mapname, v in pairs(maplist) do
+      probabilitytable[mapname] = 0
     end
-    if maptable[mapname["total"]] <= -50 then -- NEEDS TO BE FIXED
-      table.remove(maplist, mapname) -- Disable map if it has a total of -50 or lower
+    for mapname, v in pairs(mapvotes) do
+      local netvotes = v.upvotes - v.downvotes -- Gets the net vote count to apply to its probability
+        if netvotes <= -50 then
+          probabilitytable[mapname] = nil
+        else
+          probabilitytable[mapname] = netvotes
+        end
     end
-    nextmap = maplist[ (math.random() % #maplist)+1 ]
-    for mapname, v in recentmaplist do -- MAKE THIS ABLE TO BE DISABLED THROUGH A CONVAR
-      if nextmap == recentmaplist["mapname"] or nextmap == map then -- Do not switch to the currently played map, or the last 10 maps. CHANGE TO BE REDUCED CHANCE INSTEAD
-        setRandomNextMapFromList() -- THIS MAY BE ABLE TO LOOP INFINITELY IF THERE ARE NOT SUFFICIENT MAPS
+    local previousmax = 0
+    for mapname, modifier in pairs(probabilitytable) do
+      local min = previousmax
+      local max = min+100+modifier
+      previousmax = max+1
+      selectiontable[mapname]["min"] = min
+      selectiontable[mapname]["max"] = max
+    end
+    nextmapnumber = math.random() %previousmax -- Sets probability
+    for mapname, range in pairs(selectiontable) do
+        if nextmapnumber >= range.min and nextmapnumber <= range.max then
+        nextmap = mapname
+      break
       end
     end
-    -- ANNOUNCE CHANGE IN CHAT/TOP RIGHT
+    for mapname, v in recentmaplist do -- Sets nextmap
+      if nextmap == map then
+        setRandomNextMapFromList()
+      end
+    end
+    -- ANNOUNCE CHANGE IN CHAT/TOP RIGHT? -- Automatic?
   end
 end
 
@@ -94,9 +111,6 @@ local function switchMap()
   if switchmap then
     timer.Stop("end2prep")
     timer.Simple(15, RunConsoleCommand ("changelevel", nextmap))
-    local recentmaplist["mapname"] = {}
-    table.insert(recentmaplist, 1, nextmap) -- Creates a table of the most recently played 9 maps, not including the one currently being played/switched from
-    table.remove(recentmaplist, 9) -- CHANGE THIS TO BE A MAX OF 9, OR A MIN OF THE NUMBER OF MAPS IN THE TABLE - 1
   else
   LANG.Msg("limit_left", {num = rounds_left,
                           time = math.ceil(time_left / 60),
