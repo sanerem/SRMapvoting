@@ -2,7 +2,7 @@
 
 -- These are the initial values for this set of variables.
 
-local map=game.GetMap()
+local map = game.GetMap()
 local mapMinMaxTable = UpOrDownVoting.mapMinMaxTable
 local nextmap = ""
 local switchmap = false
@@ -57,21 +57,26 @@ local function changeNextMapDueToPlayerCount()
 -- ANNOUNCE CHANGE IN CHAT/TOP RIGHT -- Automatic?
 end
 
-local function setRandomNextMapFromList() -- Sets the next map based on a modified probability
+function excludeMaps(probabilitytable, mapvotesref)
+  for mapname, v in pairs(mapvotesref) do
+    local netvotes = v.upvotes - v.downvotes -- Gets the net vote count to apply to its probability
+    if netvotes <= -50 then
+      probabilitytable[mapname] = nil
+    else
+      probabilitytable[mapname] = netvotes
+    end
+  end
+end
+
+function setRandomNextMapFromList() -- Sets the next map based on a modified probability
+  local nextmap = ""
   if mapMinMaxTable ~= nil then
     local probabilitytable = {}
     local selectiontable = {}
     for mapname, v in pairs(maplist) do
       probabilitytable[mapname] = 0
     end
-    for mapname, v in pairs(mapvotes) do
-      local netvotes = v.upvotes - v.downvotes -- Gets the net vote count to apply to its probability
-        if netvotes <= -50 then
-          probabilitytable[mapname] = nil
-        else
-          probabilitytable[mapname] = netvotes
-        end
-    end
+    excludeMaps(probabilitytable, mapvotesref)
     local previousmax = 0
     for mapname, modifier in pairs(probabilitytable) do
       local min = previousmax
@@ -80,19 +85,17 @@ local function setRandomNextMapFromList() -- Sets the next map based on a modifi
       selectiontable[mapname]["min"] = min
       selectiontable[mapname]["max"] = max
     end
-    nextmapnumber = math.random() %previousmax -- Sets probability
+    local nextmapnumber = math.random() %previousmax -- Sets probability
     for mapname, range in pairs(selectiontable) do
-        if nextmapnumber >= range.min and nextmapnumber <= range.max then
+      if nextmapnumber >= range.min and nextmapnumber <= range.max then
         nextmap = mapname
-      break
+        break
       end
     end
-    for mapname, v in recentmaplist do -- Sets nextmap
-      if nextmap == map then
-        setRandomNextMapFromList()
-      end
+    if nextmap == map then
+      return setRandomNextMapFromList() else
+      return nextmap
     end
-    -- ANNOUNCE CHANGE IN CHAT/TOP RIGHT? -- Automatic?
   end
 end
 

@@ -1,3 +1,5 @@
+timer.Simple(1, function() print("test") end)
+
 UpOrDownVoting = {}
 
 if SERVER then
