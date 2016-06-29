@@ -3,13 +3,13 @@ timer.Simple(1, function() print("test") end)
 UpOrDownVoting = {}
 
 if SERVER then
-  AddCSLuaFile("upordownvoting/cl_upordownvoting.lua")
-  include("upordownvoting/sv_upordownvoting.lua")
-  include("config/sv_minmaxconfig.lua")
-  include("mapchange/sv_mapchange.lua")
-  include("test/sv_testinit.lua")
+  AddCSLuaFile("SRMapVoting/upordownvoting/cl_upordownvoting.lua")
+  include("SRMapVoting/upordownvoting/sv_upordownvoting.lua")
+  include("SRMapVoting/config/sv_minmaxconfig.lua")
+  include("SRMapVoting/mapchange/sv_mapchange.lua")
+  include("SRMapVoting/test/sv_testinit.lua")
   end
 
 if CLIENT then 
-  include("upordownvoting/cl_upordownvoting.lua") 
+  include("SRMapVoting/upordownvoting/cl_upordownvoting.lua") 
 end 
