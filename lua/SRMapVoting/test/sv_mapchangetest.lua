@@ -1,9 +1,9 @@
 local mapchangetest = GUnit.Test:new("mapchange")
 
 local function nextmapspec()
-  UpOrDownVoting.mapChangeCheckAndSet()
+  SRMapVoting.recalculate()
   local currentmap = game.GetMap()
-  local nextmap = UpOrDownVoting.setRandomNextMapFromList()
+  local nextmap = SRMapVoting.setRandomNextMapFromList()
 
   GUnit.assert(currentmap):shouldNotEqual(nextmap):shouldNotEqual(nil)
   print(currentmap)
@@ -20,8 +20,9 @@ local function excludemapspec()
   mapvotestable[map].downvotes = 100
   probabilitytable[map] = 0
   probabilitytable["gm_construct"] = 0
-  UpOrDownVoting.excludeMaps(probabilitytable, mapvotestable)
+  SRMapVoting.excludeMaps(probabilitytable, mapvotestable)
   assert(probabilitytable[map] == nil)
 end
+
 mapchangetest:addSpec("Switched to the next map successfully", nextmapspec)
 mapchangetest:addSpec("Should exclude maps with <50 votes", excludemapspec)
